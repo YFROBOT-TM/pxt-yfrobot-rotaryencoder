@@ -1,7 +1,5 @@
 // Auto-generated. Do not edit.
-
-
-    declare enum Pins {
+declare enum Pins {
     P0 = 3,
     P1 = 2,
     P2 = 1,
@@ -20,12 +18,11 @@
     P15 = 21,
     P16 = 16,
     P19 = 0,
-    }
+}
 
-
-    declare enum RotationDirection {
+declare enum YFRotationDirection {
     Left = 0,
     Right = 1,
-    }
+}
 
 // Auto-generated. Do not edit. Really.

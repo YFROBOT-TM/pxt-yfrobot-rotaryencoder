@@ -4,15 +4,15 @@ let item = 0
 basic.forever(() => {
     basic.showNumber(item)
 })
-RotaryEncoder.onPressEvent(() => {
+YFRotaryEncoder.onPressEvent(() => {
     item = 0
 })
-RotaryEncoder.onRotateEvent(RotationDirection.Right, () => {
+YFRotaryEncoder.onRotateEvent(YFRotationDirection.Right, () => {
     item += -1
 })
-RotaryEncoder.onRotateEvent(RotationDirection.Left, () => {
+YFRotaryEncoder.onRotateEvent(YFRotationDirection.Left, () => {
     item += 1
 })
 item = 0
-RotaryEncoder.init(Pins.P14, Pins.P15, Pins.P16)
+YFRotaryEncoder.init(Pins.P14, Pins.P15, Pins.P16)
 basic.showNumber(0)

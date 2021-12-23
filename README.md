@@ -12,7 +12,7 @@ Initialises the rotary encoder.
 Sets up the micro:bit to use the rotary encoder.
 
 ```sig
-RotaryEncoder.init(P0, P1, P2)
+YFRotaryEncoder.init(P0, P1, P2)
 ```
 
 This block must be placed before any of the other blocks in this list.
@@ -23,7 +23,7 @@ Button push event.
 Called whenever the button is pushed down.
 
 ```sig
-RotaryEncoder.onPressEvent(() => {
+YFRotaryEncoder.onPressEvent(() => {
     basic.showString("Button pressed!")
 })
 ```
@@ -34,11 +34,11 @@ Rotation event.
 Called whenever the encoder detects rotation.
 
 ```sig
-RotaryEncoder.onRotateEvent(RotationDirection.Left, () => {
+YFRotaryEncoder.onRotateEvent(YFRotationDirection.Left, () => {
     basic.showString("<")
 })
 
-RotaryEncoder.onRotateEvent(RotationDirection.Right, () => {
+YFRotaryEncoder.onRotateEvent(YFRotationDirection.Right, () => {
     basic.showString(">")
 })
 ```
@@ -47,18 +47,18 @@ RotaryEncoder.onRotateEvent(RotationDirection.Right, () => {
 The follow code creates a number input that can be adjusted by turning the encoder.
 
 ```blocks
-RotaryEncoder.init(P0, P1, P2)
+YFRotaryEncoder.init(P0, P1, P2)
 let item = 0
 basic.showNumber(item)
-RotaryEncoder.onRotateEvent(RotationDirection.Left, () => {
+YFRotaryEncoder.onRotateEvent(RotationDirection.Left, () => {
     item -= 1
     basic.showNumber(item)
 })
-RotaryEncoder.onRotateEvent(RotationDirection.Right, () => {
+YFRotaryEncoder.onRotateEvent(RotationDirection.Right, () => {
     item += 1
     basic.showNumber(item)
 })
-RotaryEncoder.onPressEvent(() => {
+YFRotaryEncoder.onPressEvent(() => {
     basic.showString("selected!")
 })
 ```

@@ -1,13 +1,13 @@
 //% color=50 weight=80
 //% icon="\uf01e"
-namespace RotaryEncoder {
+namespace YFRotaryEncoder {
 
     /**
      * rotary encoder was rotated.
      */
     //% blockId=rotary_ky_rotated_left_event
-    //% block="on rotated |%dir" shim=RotaryEncoder::onRotateEvent
-    export function onRotateEvent(dir: RotationDirection, body: () => void): void{
+    //% block="on rotated |%dir" shim=YFRotaryEncoder::onRotateEvent
+    export function onRotateEvent(dir: YFRotationDirection, body: () => void): void{
         return;
     }
 
@@ -15,7 +15,7 @@ namespace RotaryEncoder {
      * rotary encoder button was pressed.
      */
     //% blockId=rotary_ky_pressed_event
-    //% block="on button pressed" shim=RotaryEncoder::onPressEvent
+    //% block="on button pressed" shim=YFRotaryEncoder::onPressEvent
     export function onPressEvent(body: () => void): void{
         return;
     }
@@ -25,7 +25,7 @@ namespace RotaryEncoder {
      */ 
     //% blockId=rotary_ky_init
     //% block="connect clk %clk|dt %dt|sw %sw"
-    //% icon="\uf1ec" shim=RotaryEncoder::init
+    //% icon="\uf1ec" shim=YFRotaryEncoder::init
     export function init(clk: Pins, dt: Pins, sw: Pins): void{
         return;
     }
