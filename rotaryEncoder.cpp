@@ -84,10 +84,11 @@ namespace YFRotaryEncoder {
     }
     
     //%
-    void init(YFPins clk, YFPins dt, YFPins sw){
+    // void init(YFPins clk, YFPins dt, YFPins sw){
+    void init(YFPins clk, YFPins dt){
         ri = new InterruptIn((PinName)clk);
         dv = new DigitalIn((PinName)dt);
-        dsw = new DigitalIn((PinName)sw);
+        // dsw = new DigitalIn((PinName)sw);
         create_fiber(monitorPress);
         tsb.start(); //interrupt timer for debounce
         ri->fall(&rh, &RotateHandler::onRotated);
