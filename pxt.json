@@ -1,0 +1,19 @@
+{
+    "name": "RotaryEncoder",
+    "version": "0.0.1",
+    "description": "YFROBOT package for rotary encoder",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "enums.d.ts",
+        "rotaryEncoder.cpp",
+        "main.ts",
+        "README.md"
+    ],
+    "testFiles": [
+        "tests.ts"
+    ],
+    "public": true
+}
