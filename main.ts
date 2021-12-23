@@ -25,7 +25,7 @@ namespace YFRotaryEncoder {
     //% blockId=rotary_ky_init
     //% block="connect A %clk| B %dt| sw %sw"
     //% shim=YFRotaryEncoder::init
-    export function init(clk: Pins, dt: Pins, sw: Pins): void{
+    export function init(clk: YFPins, dt: YFPins, sw: YFPins): void{
         return;
     }
 }

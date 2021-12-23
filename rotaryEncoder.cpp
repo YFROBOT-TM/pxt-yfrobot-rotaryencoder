@@ -2,7 +2,7 @@
 #include "mbed.h"
 using namespace pxt;
 
-enum class Pins{
+enum class YFPins{
     P0=  3,
     P1=  2,
     P2=  1,
@@ -30,7 +30,11 @@ enum class YFRotationDirection{
 };
 
 namespace YFRotaryEncoder {
-    uint32_t lri = 0, lbi=0;InterruptIn *ri; DigitalIn *dv, *dsw; Timer tsb; Action leftRotate, rightRotate, pressRotate;
+    uint32_t lri = 0, lbi=0;
+    InterruptIn *ri; 
+    DigitalIn *dv, *dsw; 
+    Timer tsb; 
+    Action leftRotate, rightRotate, pressRotate;
     
     //%
     void onRotateEvent(YFRotationDirection dir, Action body) {
@@ -65,7 +69,7 @@ namespace YFRotaryEncoder {
         }
     };
     
-    // RotateHandler rh;
+    RotateHandler rh;
 
     void monitorPress(){
         //printf("entering fiber\r\n");
@@ -80,13 +84,13 @@ namespace YFRotaryEncoder {
     }
     
     //%
-    void init(Pins clk, Pins dt, Pins sw){
+    void init(YFPins clk, YFPins dt, YFPins sw){
         ri = new InterruptIn((PinName)clk);
         dv = new DigitalIn((PinName)dt);
         dsw = new DigitalIn((PinName)sw);
         create_fiber(monitorPress);
         tsb.start(); //interrupt timer for debounce
-        // ri->fall(&rh, &RotateHandler::onRotated);
-        ri->fall(&RotateHandler::onRotated);
+        ri->fall(&rh, &RotateHandler::onRotated);
+        // ri->fall(&RotateHandler::onRotated);
     }
 }
