@@ -1,8 +1,4 @@
-//% color=50 weight=80
-//% icon="\uf01e"
-
 //% color="#45b787" weight=10 icon="\uf01e" 
-//icon="\uf12e"
 namespace YFRotaryEncoder {
 
     /**
