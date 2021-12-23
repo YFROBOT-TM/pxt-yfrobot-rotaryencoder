@@ -14,5 +14,5 @@ YFRotaryEncoder.onRotateEvent(YFRotationDirection.Left, () => {
     item += 1
 })
 item = 0
-YFRotaryEncoder.init(Pins.P14, Pins.P15, Pins.P16)
+YFRotaryEncoder.init(YFPins.P14, YFPins.P15, YFPins.P16)
 basic.showNumber(0)

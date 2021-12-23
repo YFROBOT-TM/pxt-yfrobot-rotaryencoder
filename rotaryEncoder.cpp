@@ -91,6 +91,5 @@ namespace YFRotaryEncoder {
         create_fiber(monitorPress);
         tsb.start(); //interrupt timer for debounce
         ri->fall(&rh, &RotateHandler::onRotated);
-        // ri->fall(&RotateHandler::onRotated);
     }
 }
