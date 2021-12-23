@@ -53,28 +53,29 @@ namespace YFRotaryEncoder {
     void onPress(){
         runAction0(pressRotate);
     }
+
     class RotateHandler {
         public:
         void onRotated(){
-        uint32_t now = tsb.read_ms();
-        if(now - lri < 50) return;
-        lri = now;
-        if(dv->read()) create_fiber(onLR);//fire right rotate
-        else create_fiber(onRR); //fire left rotate
+            uint32_t now = tsb.read_ms();
+            if(now - lri < 50) return;
+            lri = now;
+            if(dv->read()) create_fiber(onLR);//fire right rotate
+            else create_fiber(onRR); //fire left rotate
         }
     };
     
-    RotateHandler rh;
+    // RotateHandler rh;
 
     void monitorPress(){
         //printf("entering fiber\r\n");
         while(1){
-        uBit.sleep(50);
-        if(dsw->read()) continue;
-        uint32_t now = tsb.read_ms();
-        if(now - lbi < 50) continue;
-        lbi = now;
-        onPress();
+            uBit.sleep(50);
+            if(dsw->read()) continue;
+            uint32_t now = tsb.read_ms();
+            if(now - lbi < 50) continue;
+            lbi = now;
+            onPress();
         }
     }
     
@@ -85,6 +86,7 @@ namespace YFRotaryEncoder {
         dsw = new DigitalIn((PinName)sw);
         create_fiber(monitorPress);
         tsb.start(); //interrupt timer for debounce
-        ri->fall(&rh, &RotateHandler::onRotated);
+        // ri->fall(&rh, &RotateHandler::onRotated);
+        ri->fall(&RotateHandler::onRotated);
     }
 }
