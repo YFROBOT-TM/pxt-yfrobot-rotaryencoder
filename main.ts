@@ -1,5 +1,8 @@
 //% color=50 weight=80
 //% icon="\uf01e"
+
+//% color="#45b787" weight=10 icon="\uf01e" 
+//icon="\uf12e"
 namespace YFRotaryEncoder {
 
     /**
@@ -24,8 +27,8 @@ namespace YFRotaryEncoder {
      * initialises local variables and enables the rotary encoder.
      */ 
     //% blockId=rotary_ky_init
-    //% block="connect clk %clk|dt %dt|sw %sw"
-    //% icon="\uf1ec" shim=YFRotaryEncoder::init
+    //% block="connect A %clk| B %dt| sw %sw"
+    //% shim=YFRotaryEncoder::init
     export function init(clk: Pins, dt: Pins, sw: Pins): void{
         return;
     }
