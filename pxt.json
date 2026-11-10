@@ -1,20 +1,25 @@
 {
     "name": "RotaryEncoder",
-    "version": "0.0.2",
-    "description": "YFROBOT package for rotary encoder",
+    "version": "1.0.0",
+    "description": "YFROBOT rotary encoder MakeCode package (micro:bit V1.5 / V2)",
     "license": "MIT",
     "dependencies": {
-        "core": "*",
-        "microphone": "*"
+        "core": "*"
     },
     "files": [
-        "enums.d.ts",
-        "rotaryEncoder.cpp",
         "main.ts",
-        "README.md"
+        "README.md",
+        "_locales/zh-cn/RotaryEncoder-strings.json",
+        "_locales/zh-cn/RotaryEncoder-jsdoc-strings.json",
+        "_locales/zh-tw/RotaryEncoder-strings.json",
+        "_locales/zh-tw/RotaryEncoder-jsdoc-strings.json"
     ],
     "testFiles": [
         "tests.ts"
     ],
-    "public": true
+    "public": true,
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "tsprj"
 }

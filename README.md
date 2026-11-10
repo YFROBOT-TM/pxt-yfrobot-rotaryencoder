@@ -1,69 +1,161 @@
-# KY040 Rotary Encoder MakeCode Package [![Build Status](https://travis-ci.org/Tinkertanker/pxt-rotary-encoder-ky040.svg?branch=master)](https://travis-ci.org/Tinkertanker/pxt-rotary-encoder-ky040)
+# YFROBOT 旋转编码器 MakeCode 扩展（v1.0.0）
 
-This is the MakeCode package for the KY-040 rotary encoder.
+YFROBOT 乐高/黑板系列 **旋转编码器模块（EC11 类）** 的 MakeCode 图形化扩展。
+**micro:bit V1.5 与 V2.0 及以上通用**，纯 TypeScript 实现，不再包含任何 C++。
 
-## Hardware Setup
-1. Connect the appropriate pins (CLK, DT, SW, GND) to the micro:bit.
+扩展地址（在 MakeCode 里「扩展 → 从 GitHub 搜索/输入地址」）：
 
-## Blocks
-### Initialise rotary encoder
-Initialises the rotary encoder.
-
-Sets up the micro:bit to use the rotary encoder.
-
-```sig
-YFRotaryEncoder.init(P0, P1, P2)
+```
+https://github.com/YFROBOT-TM/pxt-yfrobot-rotaryencoder
 ```
 
-This block must be placed before any of the other blocks in this list.
+---
 
-### On button pressed
-Button push event.
+## 一、为什么旧版只能用在 V1.5（根因分析）
 
-Called whenever the button is pushed down.
+旧版（v0.0.2）在 V2 上「积木能拖出来，但转了没反应 / 干脆编译失败」，是**两个原因叠加**：
 
-```sig
-YFRotaryEncoder.onPressEvent(() => {
-    basic.showString("Button pressed!")
-})
+**原因 1：旧版逻辑写在 mbed C++ 里，V2 没有这套 API。**
+旧版 `rotaryEncoder.cpp` 用了 `#include "mbed.h"`、`InterruptIn`、`DigitalIn`、`Timer`。
+micro:bit V1.5 的 MakeCode 运行在 mbed-classic（DAL）之上，这套 API 存在；
+V2 的 MakeCode 换成了 CODAL，**不提供 `mbed.h`，也没有 `InterruptIn`**，
+扩展的 C++ 部分无法为 V2 编译链接，积木自然失效。
+（Microsoft 自己的 `pxt-microbit/libs/core/pins.cpp` 就是用 `#if MICROBIT_CODAL … #else … #endif`
+分叉写两套的，原因相同。）
+
+**原因 2：引脚被硬编码成了 nRF51 的 GPIO 编号。**
+旧版枚举里是 `P0=3, P1=2, P2=1, P3=4, P5=17 …`，这是 **V1.5（nRF51822）** 的引脚映射；
+V2 是 nRF52833，同一个数字指向的是完全不同的物理引脚。
+也就是说，即使 C++ 能编译通过，在 V2 上 `P1` 也会被配置成别的脚。
+
+结论：只改数字修不好，必须换实现方式。本版直接把整套逻辑搬到 TypeScript。
+
+---
+
+## 二、本版实现要点
+
+| 项目 | 说明 |
+| --- | --- |
+| 语言 | 纯 TypeScript（`main.ts`），无 C++、无 `mbed.h`、无目标版本分支 |
+| 兼容性 | micro:bit V1.5 / V2.0 / V2.2 同一份代码 |
+| 触发方式 | `pins.onPulsed` 硬件边沿事件（A/B 两相的上升沿、下降沿都监听） |
+| 兜底 | 5ms 后台轮询，边沿事件异常时仍可正常计数 |
+| 译码 | 四状态正交译码表，漏采半个周期不会算反方向，只会计少 |
+| 计数口径 | A 相一个完整周期 = 一格 = 计数值 ±1（与原版一致，20 格/圈即 20 次计数） |
+| 消抖 | 5ms 计数消抖 + 30ms 按键消抖 |
+
+> 工程说明：边沿事件回调、后台轮询、用户处理程序都跑在 MakeCode 的协程里，
+> 用户积木里写 `显示数字` 这类耗时积木时，编码器仍由边沿事件继续计数。
+
+---
+
+## 三、硬件接线
+
+| 旋转编码器模块 | micro:bit | 说明 |
+| --- | --- | --- |
+| V / + | 3V | 电源 |
+| GND | GND | 地 |
+| A（CLK） | 例：P1 | A 相，必须接 |
+| B（DT） | 例：P2 | B 相，必须接 |
+| SW（按键） | 例：P0 | 不用按键可不接 |
+
+- A/B 接反不会损坏，但方向会相反 → 用「反转旋转方向」积木纠正，不必重新接线。
+- 扩展内部已开启引脚上拉，模块自带 / 不自带上拉电阻都能用。
+- 引脚可以选任意可用脚（P0~P20），只要避开 I2C、舵机等你已经占用的脚。
+
+---
+
+## 四、积木清单
+
+**基础**
+
+| 积木 | 作用 |
+| --- | --- |
+| `连接旋转编码器 A(CLK) □ B(DT) □` | 初始化（不接按键） |
+| `连接旋转编码器 A(CLK) □ B(DT) □ 按键 □` | 初始化（接按键） |
+| `旋转编码器计数值` | 计数值，右转 +1、左转 −1，可为负 |
+| `旋转编码器计数值清零` | 归零 |
+| `旋转编码器按键被按下` | 判断按键是否正被按住 |
+
+**事件**
+
+| 积木 | 作用 |
+| --- | --- |
+| `当旋转编码器 [右转/左转] 转过一格时` | 分方向的事件 |
+| `当旋转编码器转动时（任意方向）` | 任意方向，方向用「旋转方向」读取 |
+| `当旋转编码器按键被按下时` | 按键事件 |
+| `旋转方向` | 最近一次转动方向（高级） |
+
+**高级**
+
+| 积木 | 作用 |
+| --- | --- |
+| `将旋转编码器计数值设为 □` | 限幅、设初值 |
+| `反转旋转方向 □` | A/B 接反时纠正 |
+
+`连接…` 积木必须放在 **「当开机时」** 里，并在其它旋转编码器积木之前执行。
+
+---
+
+## 五、三步上手
+
+1. MakeCode 新建项目 → 扩展 → 输入上面的 GitHub 地址 → 添加「旋转编码器」。
+2. 「当开机时」里放 `连接旋转编码器 A(CLK) P1 B(DT) P2 按键 P0`。
+3. 放一个 `当旋转编码器 右转 转过一格时` → `显示数字 旋转编码器计数值`。
+
+完整可复制的示例程序（JS 源码 + 说明）见用户手册目录：
+
+```
+…\传感器-MicroBit-MakeCode程序\29.旋转编码器\MicroBit-MakeCodeV1V2-扩展版-示例程序\
 ```
 
-### On rotate (left/right)
-Rotation event.
+---
 
-Called whenever the encoder detects rotation.
+## 六、常见问题
 
-```sig
-YFRotaryEncoder.onRotateEvent(YFRotationDirection.Left, () => {
-    basic.showString("<")
-})
+**Q：转了数字不动。**
+① 检查 `连接…` 积木是否在「当开机时」且在最前面；② A/B 是否接到了积木里写的引脚；
+③ 模块 V/GND 是否接好（先看模块电源灯）。
 
-YFRotaryEncoder.onRotateEvent(YFRotationDirection.Right, () => {
-    basic.showString(">")
-})
+**Q：数字跳得比手转得快 / 一格跳好几下。**
+说明手上这颗编码器是「一格半个周期」的型号（少数批次）。当前按 A 相一个完整周期计一格；
+可以用「将计数值设为」做 `÷2` 处理，或反馈给我们做型号适配。
+
+**Q：方向反了（右转变小）。**
+接「反转旋转方向 打开」，或者把 A/B 两根线对调。
+
+**Q：按键没反应。**
+初始化要用带「按键」的那个积木，并且 SW 接到了对应引脚。
+
+**Q：和旧版程序兼容吗？**
+积木名字和方向枚举（左转/右转）保持一致，但旧版 `连接 A□B□SW□` 那个三脚积木已拆成两个积木，
+旧工程重新拖一次即可，逻辑不需要改。
+
+**Q：为什么不做成 C++ 中断版本？**
+V1.5（mbed/DAL）和 V2（CODAL）的底层 API 完全不同，一份 C++ 要写两套并分别维护；
+纯 TypeScript 用 MakeCode 公共 API，两个版本一份代码，长期维护成本最低。
+
+---
+
+## 七、版本记录
+
+| 版本 | 日期 | 说明 |
+| --- | --- | --- |
+| 1.0.0 | 2026-11-10 | 重写为纯 TypeScript；支持 V1.5 + V2；中文化（zh-cn / zh-tw）；新增计数值、清零、按键状态、方向反转、任意方向事件 |
+| 0.0.2 | 2021-12-23 | 最后一代 C++/mbed 版本，仅 V1.5 |
+
+## 八、目录说明
+
+```
+main.ts                                  全部积木实现（唯一源码）
+pxt.json                                 扩展描述
+_locales/zh-cn/, _locales/zh-tw/         简体 / 繁体中文积木文字
+tests.ts                                 自测程序（不进入用户项目）
+legacy/rotaryEncoder_v0_V1.5-only.cpp    旧版 C++ 源码，仅作留档，不参与编译
+legacy/enums_v0_V1.5-only.d.ts           旧版自动生成的枚举，仅作留档
+built/, pxt_modules/                     旧版本地构建产物，已过期，可忽略
 ```
 
-## Example: Number input
-The follow code creates a number input that can be adjusted by turning the encoder.
+## License
 
-```blocks
-YFRotaryEncoder.init(P0, P1, P2)
-let item = 0
-basic.showNumber(item)
-YFRotaryEncoder.onRotateEvent(RotationDirection.Left, () => {
-    item -= 1
-    basic.showNumber(item)
-})
-YFRotaryEncoder.onRotateEvent(RotationDirection.Right, () => {
-    item += 1
-    basic.showNumber(item)
-})
-YFRotaryEncoder.onPressEvent(() => {
-    basic.showString("selected!")
-})
-```
-
-## Supported targets
-
- * for PXT/microbit
- 
+MIT

@@ -1,18 +1,27 @@
 // tests go here; this will not be compiled when this package is used as a library
+// 自测程序：右转加 1、左转减 1、按键清零。仅用于 pxt test / 本地验证。
 
-let item = 0
+YFRotaryEncoder.initWithButton(DigitalPin.P1, DigitalPin.P2, DigitalPin.P0)
+basic.showNumber(YFRotaryEncoder.count())
+
+YFRotaryEncoder.onRotate(YFRotationDirection.Right, () => {
+    basic.showNumber(YFRotaryEncoder.count())
+})
+
+YFRotaryEncoder.onRotate(YFRotationDirection.Left, () => {
+    basic.showNumber(YFRotaryEncoder.count())
+})
+
+YFRotaryEncoder.onButtonPressed(() => {
+    YFRotaryEncoder.clearCount()
+    basic.showNumber(YFRotaryEncoder.count())
+})
+
 basic.forever(() => {
-    basic.showNumber(item)
+    if (YFRotaryEncoder.isButtonPressed()) {
+        led.plot(0, 0)
+    } else {
+        led.unplot(0, 0)
+    }
+    basic.pause(50)
 })
-YFRotaryEncoder.onPressEvent(() => {
-    item = 0
-})
-YFRotaryEncoder.onRotateEvent(YFRotationDirection.Right, () => {
-    item += -1
-})
-YFRotaryEncoder.onRotateEvent(YFRotationDirection.Left, () => {
-    item += 1
-})
-item = 0
-YFRotaryEncoder.init(YFPins.P14, YFPins.P15, YFPins.P16)
-basic.showNumber(0)

@@ -1,0 +1,19 @@
+{
+    "{id:category}YFRotaryEncoder": "旋转编码器",
+    "{id:group}Basic": "基础",
+    "{id:group}Events": "事件",
+    "{id:group}Advanced": "高级",
+    "YFRotationDirection.Left|block": "左转（逆时针）",
+    "YFRotationDirection.Right|block": "右转（顺时针）",
+    "YFRotaryEncoder.init|block": "连接旋转编码器|A(CLK) %clk |B(DT) %dt",
+    "YFRotaryEncoder.initWithButton|block": "连接旋转编码器|A(CLK) %clk |B(DT) %dt |按键 %sw",
+    "YFRotaryEncoder.onRotate|block": "当旋转编码器 %dir 转过一格时",
+    "YFRotaryEncoder.onAnyRotate|block": "当旋转编码器转动时（任意方向）",
+    "YFRotaryEncoder.onButtonPressed|block": "当旋转编码器按键被按下时",
+    "YFRotaryEncoder.direction|block": "旋转方向",
+    "YFRotaryEncoder.count|block": "旋转编码器计数值",
+    "YFRotaryEncoder.clearCount|block": "旋转编码器计数值清零",
+    "YFRotaryEncoder.isButtonPressed|block": "旋转编码器按键被按下",
+    "YFRotaryEncoder.setCount|block": "将旋转编码器计数值设为 %value",
+    "YFRotaryEncoder.setReverse|block": "反转旋转方向 %enable"
+}
