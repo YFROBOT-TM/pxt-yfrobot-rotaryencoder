@@ -3,8 +3,8 @@
     "{id:group}Basic": "基礎",
     "{id:group}Events": "事件",
     "{id:group}Advanced": "進階",
-    "YFRotationDirection.Left|block": "左轉（逆時針）",
-    "YFRotationDirection.Right|block": "右轉（順時針）",
+    "YFRotationDirection.Left|block": "逆時針",
+    "YFRotationDirection.Right|block": "順時針",
     "YFRotaryEncoder.init|block": "連接旋轉編碼器|A(CLK) %clk |B(DT) %dt",
     "YFRotaryEncoder.initWithButton|block": "連接旋轉編碼器|A(CLK) %clk |B(DT) %dt |按鍵 %sw",
     "YFRotaryEncoder.onRotate|block": "當旋轉編碼器 %dir 轉過一格時",
@@ -14,6 +14,7 @@
     "YFRotaryEncoder.count|block": "旋轉編碼器計數值",
     "YFRotaryEncoder.clearCount|block": "旋轉編碼器計數值歸零",
     "YFRotaryEncoder.isButtonPressed|block": "旋轉編碼器按鍵被按下",
+    "YFRotaryEncoder.setReverse|block": "反轉旋轉方向 %enable",
     "YFRotaryEncoder.setCount|block": "將旋轉編碼器計數值設為 %value",
-    "YFRotaryEncoder.setReverse|block": "反轉旋轉方向 %enable"
+    "YFRotaryEncoder.setPulsesPerDetent|block": "設定每格脈衝數為 %n"
 }

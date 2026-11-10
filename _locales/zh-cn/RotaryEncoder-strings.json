@@ -3,8 +3,8 @@
     "{id:group}Basic": "基础",
     "{id:group}Events": "事件",
     "{id:group}Advanced": "高级",
-    "YFRotationDirection.Left|block": "左转（逆时针）",
-    "YFRotationDirection.Right|block": "右转（顺时针）",
+    "YFRotationDirection.Left|block": "逆时针",
+    "YFRotationDirection.Right|block": "顺时针",
     "YFRotaryEncoder.init|block": "连接旋转编码器|A(CLK) %clk |B(DT) %dt",
     "YFRotaryEncoder.initWithButton|block": "连接旋转编码器|A(CLK) %clk |B(DT) %dt |按键 %sw",
     "YFRotaryEncoder.onRotate|block": "当旋转编码器 %dir 转过一格时",
@@ -14,6 +14,7 @@
     "YFRotaryEncoder.count|block": "旋转编码器计数值",
     "YFRotaryEncoder.clearCount|block": "旋转编码器计数值清零",
     "YFRotaryEncoder.isButtonPressed|block": "旋转编码器按键被按下",
+    "YFRotaryEncoder.setReverse|block": "反转旋转方向 %enable",
     "YFRotaryEncoder.setCount|block": "将旋转编码器计数值设为 %value",
-    "YFRotaryEncoder.setReverse|block": "反转旋转方向 %enable"
+    "YFRotaryEncoder.setPulsesPerDetent|block": "设置每格脉冲数为 %n"
 }

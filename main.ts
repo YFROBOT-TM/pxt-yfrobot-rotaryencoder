@@ -11,9 +11,9 @@
  */
 
 enum YFRotationDirection {
-    //% block="left (CCW)"
+    //% block="counter-clockwise"
     Left = 0,
-    //% block="right (CW)"
+    //% block="clockwise"
     Right = 1
 }
 
@@ -21,15 +21,15 @@ enum YFRotationDirection {
 //% groups='["Basic", "Events", "Advanced"]'
 namespace YFRotaryEncoder {
 
-    // 一次计数后忽略的电平抖动时间（毫秒）
-    const DEBOUNCE_MS = 5
+    // 一次脉冲后忽略的电平抖动时间（毫秒）
+    const DEBOUNCE_MS = 3
     // 兜底轮询周期（毫秒）：即使引脚边沿事件没有触发，也能靠轮询统计
     const POLL_MS = 5
     // 按键消抖时间（毫秒）
     const BUTTON_MS = 30
 
     // 四状态（A、B 正交编码）译码表，下标 = 上次状态 * 4 + 本次状态
-    // +1 / -1 表示转动一格，0 表示没有变化或丢失了半个周期
+    // +1 / -1 表示前进/后退一个正交状态，0 表示没变化或丢失了半个周期
     const QDEC = [
         0, 1, -1, 0,
         -1, 0, 0, 1,
@@ -41,11 +41,16 @@ namespace YFRotaryEncoder {
     let dtPin: DigitalPin = null       // B 相（DT）
     let swPin: DigitalPin = null       // 按键（SW），未接为 null
 
-    let stepCount = 0                  // 累计转动格数，右转 +1、左转 -1
+    // 每格对应的正交状态数。实测本模块相邻两格之间只走 2 个状态
+    // （一个完整的 A/B 周期 = 2 格），所以默认 2：转一格计 1 次。
+    let pulsesPerDetent = 2
+    let stepAcc = 0                    // 不足一格的余量，累积满一格才输出
+
+    let stepCount = 0                  // 累计转动格数，顺时针 +1、逆时针 -1
     let lastDir = YFRotationDirection.Right
     let reversed = false               // 方向反转开关
     let lastState = -1                 // 上次采样的 (A<<1|B) 状态
-    let lastStepAt = 0                 // 上次计数时刻，用于消抖
+    let lastStepAt = 0                 // 上次采样时刻，用于消抖
 
     let onLeftHandler: () => void = null
     let onRightHandler: () => void = null
@@ -74,6 +79,7 @@ namespace YFRotaryEncoder {
 
     /**
      * 把旋转编码器接到 micro:bit（A、B 两相 + 按键）。
+     * 当前模块未引出按键引脚，积木已隐藏，保留接口以便后续硬件升级。
      * @param clk A 相（CLK）引脚，例如 DigitalPin.P1
      * @param dt B 相（DT）引脚，例如 DigitalPin.P2
      * @param sw 按键（SW）引脚，例如 DigitalPin.P0
@@ -81,6 +87,7 @@ namespace YFRotaryEncoder {
     //% blockId=YFRotaryEncoder_initWithButton
     //% block="connect rotary encoder |A (CLK) %clk |B (DT) %dt |button %sw"
     //% group="Basic" weight=99 blockGap=8
+    //% blockHidden=1
     //% clk.fieldEditor="gridpicker" clk.fieldOptions.columns=4 clk.fieldOptions.tooltips="false"
     //% dt.fieldEditor="gridpicker" dt.fieldOptions.columns=4 dt.fieldOptions.tooltips="false"
     //% sw.fieldEditor="gridpicker" sw.fieldOptions.columns=4 sw.fieldOptions.tooltips="false"
@@ -95,13 +102,14 @@ namespace YFRotaryEncoder {
         swPin = sw
 
         stepCount = 0
+        stepAcc = 0
         lastDir = YFRotationDirection.Right
         lastState = -1
         lastStepAt = 0
         buttonDown = false
         lastButtonAt = 0
 
-        // EC11 的 A/B 为开漏/干接点输出，统一开内部上拉，没有外接上拉也能用
+        // EC11 的 A/B 为干接点/开漏输出，统一开内部上拉，没有外接上拉也能用
         pins.setPull(clk, PinPullMode.PullUp)
         pins.setPull(dt, PinPullMode.PullUp)
         if (sw != null) {
@@ -126,7 +134,8 @@ namespace YFRotaryEncoder {
 
     /**
      * 采样一次 A/B 电平并更新状态机。
-     * 只在 A 相下降沿（一个机械格的中点）输出一格计数，因此每格只加 1。
+     * 每走一个正交状态累加 ±1，累积满「每格脉冲数」才输出一格；
+     * 抖动只会来回抵消，不会多计。
      */
     function sampleEncoder(): void {
         if (clkPin == null || dtPin == null) return
@@ -143,16 +152,25 @@ namespace YFRotaryEncoder {
         let delta = QDEC[prev * 4 + state]
         if (delta == 0) return
 
-        // 只在 A 相由高变低时记一格：一格 = 一个完整的正交周期
-        if ((prev & 2) == 0 || (state & 2) != 0) return
-
         let now = control.millis()
         if (now - lastStepAt < DEBOUNCE_MS) return
         lastStepAt = now
 
-        let clockwise = delta < 0        // 与旧版库的方向定义保持一致
+        // 旧版库中「A 相下降沿 + B 为高」= 顺时针，这里沿用同样的方向定义
+        let clockwise = delta < 0
         if (reversed) clockwise = !clockwise
 
+        stepAcc += clockwise ? 1 : -1
+        if (stepAcc >= pulsesPerDetent) {
+            stepAcc -= pulsesPerDetent
+            emitStep(true)
+        } else if (stepAcc <= -pulsesPerDetent) {
+            stepAcc += pulsesPerDetent
+            emitStep(false)
+        }
+    }
+
+    function emitStep(clockwise: boolean): void {
         lastDir = clockwise ? YFRotationDirection.Right : YFRotationDirection.Left
         if (clockwise) stepCount += 1
         else stepCount -= 1
@@ -163,7 +181,7 @@ namespace YFRotaryEncoder {
     }
 
     /**
-     * 后台任务：兜底轮询编码器电平 + 监测按键状态。
+     * 后台任务：兜底轮询编码器电平 + 监测按键状态（按键功能暂未启用）。
      */
     function startMonitor(): void {
         if (monitorStarted) return
@@ -211,20 +229,9 @@ namespace YFRotaryEncoder {
      */
     //% blockId=YFRotaryEncoder_onAnyRotate
     //% block="on rotary encoder turned (any direction)"
-    //% group="Events" weight=94 blockGap=8 advanced=true
+    //% group="Events" weight=94 blockGap=8
     export function onAnyRotate(body: () => void): void {
         onAnyHandler = body
-    }
-
-    /**
-     * 当旋转编码器的按键被按下时，执行一段程序。
-     * @param body 要执行的程序
-     */
-    //% blockId=YFRotaryEncoder_onButtonPressed
-    //% block="on rotary encoder button pressed"
-    //% group="Events" weight=93 blockGap=8
-    export function onButtonPressed(body: () => void): void {
-        onButtonHandler = body
     }
 
     /**
@@ -232,13 +239,26 @@ namespace YFRotaryEncoder {
      */
     //% blockId=YFRotaryEncoder_direction
     //% block="turning direction"
-    //% group="Events" weight=60 advanced=true
+    //% group="Events" weight=93 blockGap=8
     export function direction(): YFRotationDirection {
         return lastDir
     }
 
     /**
-     * 旋转编码器的计数值：右转 +1，左转 -1，可正可负。
+     * 当旋转编码器的按键被按下时，执行一段程序。
+     * 当前模块未引出按键引脚，积木已隐藏。
+     * @param body 要执行的程序
+     */
+    //% blockId=YFRotaryEncoder_onButtonPressed
+    //% block="on rotary encoder button pressed"
+    //% group="Events" weight=92 blockGap=8
+    //% blockHidden=1
+    export function onButtonPressed(body: () => void): void {
+        onButtonHandler = body
+    }
+
+    /**
+     * 旋转编码器的计数值：顺时针一格 +1，逆时针一格 -1，可正可负。
      */
     //% blockId=YFRotaryEncoder_count
     //% block="rotary encoder count"
@@ -255,28 +275,20 @@ namespace YFRotaryEncoder {
     //% group="Basic" weight=89 blockGap=8
     export function clearCount(): void {
         stepCount = 0
+        stepAcc = 0
     }
 
     /**
      * 旋转编码器的按键现在是否被按住。
+     * 当前模块未引出按键引脚，积木已隐藏。
      */
     //% blockId=YFRotaryEncoder_isButtonPressed
     //% block="rotary encoder button is pressed"
     //% group="Basic" weight=70 blockGap=8
+    //% blockHidden=1
     export function isButtonPressed(): boolean {
         if (swPin == null) return false
         return pins.digitalReadPin(swPin) == 0
-    }
-
-    /**
-     * 手工设定计数值（例如限制在 0~100 范围内时使用）。
-     * @param value 新的计数值，例如 0
-     */
-    //% blockId=YFRotaryEncoder_setCount
-    //% block="set rotary encoder count to %value"
-    //% group="Advanced" weight=41 blockGap=8 advanced=true
-    export function setCount(value: number): void {
-        stepCount = Math.round(value)
     }
 
     /**
@@ -285,9 +297,39 @@ namespace YFRotaryEncoder {
      */
     //% blockId=YFRotaryEncoder_setReverse
     //% block="reverse rotation direction %enable"
-    //% group="Advanced" weight=40 blockGap=8 advanced=true
+    //% group="Basic" weight=60 blockGap=8
     //% enable.shadow="toggleOnOff"
     export function setReverse(enable: boolean): void {
         reversed = !!enable
+        stepAcc = 0
+    }
+
+    /**
+     * 手工设定计数值（例如限制在 0~100 范围内时使用）。
+     * @param value 新的计数值，例如 0
+     */
+    //% blockId=YFRotaryEncoder_setCount
+    //% block="set rotary encoder count to %value"
+    //% group="Advanced" weight=41 blockGap=8
+    export function setCount(value: number): void {
+        stepCount = Math.round(value)
+        stepAcc = 0
+    }
+
+    /**
+     * 设置每格对应的正交状态数，默认 2（转一格计 1 次）。
+     * 若发现转一格跳 2 次就改成 4，转两格才跳 1 次就改成 1。
+     * @param n 每格状态数，例如 2
+     */
+    //% blockId=YFRotaryEncoder_setPulsesPerDetent
+    //% block="set pulses per detent to %n"
+    //% group="Advanced" weight=40 blockGap=8
+    //% n.min=1 n.max=8 n.defl=2
+    export function setPulsesPerDetent(n: number): void {
+        let v = Math.round(n)
+        if (v < 1) v = 1
+        if (v > 8) v = 8
+        pulsesPerDetent = v
+        stepAcc = 0
     }
 }
